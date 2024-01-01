@@ -8,26 +8,20 @@ const paginationQueryExtracter = require("../Utils/paginationQueryExtractor");
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
     const { password } = req.body;
-    const doc = await Model.findOne({ _id: req.params.id }).select("+password");
+    if (!password) {
+      return next(new AppErr("Password is required", 400));
+    }
 
-    // console.log("Provided Password:", password);
-    // console.log(
-    //   "Stored Hashed Password:",
-    //   doc ? doc.password : " not found"
-    // );
-
-    // Compare the provided password with the hashed password
+    // Find the document by ID and select the password
+    const doc = await Model.findById(req.params.id).select("+password");
 
     if (!doc) {
       return next(new AppErr("No User found with that Id", 404));
     }
 
-    const passwordMatch = await bcrypt.compare(
-      password,
-      doc ? doc.password : ""
-    );
+    // Compare the provided password with the hashed password
+    const passwordMatch = await bcrypt.compare(password, doc.password);
 
-    console.log(passwordMatch);
     if (!passwordMatch) {
       return next(new AppErr("Incorrect password", 401));
     }
@@ -42,7 +36,6 @@ exports.deleteOne = (Model) =>
       data: null,
     });
   });
-
 //   Factory function to Update a document
 exports.updateOne = (Model) =>
   catchAsync(async (req, res, next) => {

@@ -124,15 +124,6 @@ exports.protect = catchAsync(async (req, res, next) => {
 exports.socialLogin = catchAsync(async (req, res) => {
   let user = await User.findOne({ email: req.body.email });
   if (!user) {
-    try {
-      let obj = await stripe.customers.create({
-        name: req.body.name,
-        email: req.body.email,
-      });
-      id = obj.id;
-    } catch (error) {
-      console.log(error);
-    }
     console.log("C_id", id);
     user = await User.create({
       ...JSON.parse(JSON.stringify(req.body)),
