@@ -190,14 +190,6 @@ exports.confirmSubscription = catchAsync(async (req, res) => {
   const subscriptionDetails = await stripe.subscriptions.retrieve(
     subscriptionId
   );
-  if (!paymentIntent) {
-    return res.status(200).send({
-      success: false,
-      status: 400,
-      message: "Payment Intent not Found",
-      data: { paymentIntent },
-    });
-  }
 
   console.log("Payment Intent", paymentIntent);
   console.log("Susbcription", subscriptionDetails);
