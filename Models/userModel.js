@@ -4,11 +4,7 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: {
-      type: String,
-      trim: true,
-    },
-    lastName: {
+    name: {
       type: String,
       trim: true,
     },
@@ -26,6 +22,12 @@ const userSchema = new mongoose.Schema(
         "https://icon-library.com/images/default-profile-icon/default-profile-icon-6.jpg",
     },
     password: {
+      type: String,
+      required: [true, "must enter password"],
+      minlength: 8,
+      select: false,
+    },
+    confirmPassword: {
       type: String,
       required: [true, "must enter password"],
       minlength: 8,

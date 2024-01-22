@@ -1,11 +1,11 @@
 {
-  "name": "nuentra",
+  "name": "mamvo",
   "version": "1.0.0",
-  "description": "The Amazing backend of nuentra application",
+  "description": "The Amazing backend of mamvo application",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "nodemon server.js"
   },
   "author": "islahuddin",
   "license": "ISC",

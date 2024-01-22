@@ -180,9 +180,10 @@ exports.signup = catchAsync(async (req, res, next) => {
     name: req.body.name,
     email: req.body.email,
     image: req.body.image,
-    // locationUpdatedAt: Date.now(),
+    locationUpdatedAt: Date.now(),
     // customerId: id,
     password: req.body.password,
+    confirmPassword: req.body.confirmPassword,
     otp: null,
     passwordChangedAt: Date.now(),
   });
