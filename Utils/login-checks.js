@@ -1,4 +1,4 @@
-const loginChecks = (user) => {
+ const loginChecks = (user) => {
   // console.log("ROLE:", currentrole, "USER:", user);
   if (!user.verified) {
     return "email-unverified";
