@@ -11,11 +11,10 @@ const eventSchema = new mongoose.Schema({
   },
   location: {
     type: {
-      name: String,
-      latitude: Number,
-      longitude: Number,
+      type: String,
+      default: "Point",
     },
-    required: true,
+    coordinates: { type: [Number], default: [0, 0] },
   },
   image: String,
   eventInfo: {
