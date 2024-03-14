@@ -7,7 +7,7 @@ module.exports = class Email {
     this.firstName = user.name;
 
     this.url = url;
-    this.from = `WordSnap App <${process.env.GMAILUSER}>`;
+    this.from = `Nuentra App <${process.env.GMAILUSER}>`;
   }
 
   newTransport() {
@@ -49,10 +49,7 @@ module.exports = class Email {
   }
   async sendWelcome(a) {
     console.log("sending mail...");
-    await this.send(
-      `Your OTP is: ${a}`,
-      `Email Verification For WorldSnap App`
-    );
+    await this.send(`Your OTP is: ${a}`, `Email Verification For Nuentra App`);
   }
 
   // async sendGuardianWelcome(a) {
