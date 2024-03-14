@@ -13,6 +13,7 @@ const generateOtp = require("../Utils/otpGenerator");
 // const cron = require("node-cron");
 const RefreshRecord = require("../Models/refreshRecordModel");
 const DeviceSession = require("../Models/sessionModel");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 const signToken = (id, noExpiry) => {
   return jwt.sign(
@@ -152,6 +153,7 @@ exports.socialLogin = catchAsync(async (req, res) => {
   );
 });
 // =========SIGNUP USER=====================
+
 exports.signup = catchAsync(async (req, res, next) => {
   // Check if password and confirm password match
   if (req.body.password !== req.body.confirmPassword) {
@@ -186,11 +188,13 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // If password and confirm password match, create new user
   const newUser = await User.create({
-    name: req.body.name,
+    fullName: req.body.fullName,
     email: req.body.email,
     image: req.body.image,
+    userType: req.body.userType,
+    locationUpdatedAt: Date.now(),
+    // customerId: id,
     password: req.body.password,
-    confirmPassword: req.body.confirmPassword,
     confirmPassword: req.body.confirmPassword,
     otp: null,
     passwordChangedAt: Date.now(),
@@ -234,9 +238,12 @@ exports.signup = catchAsync(async (req, res, next) => {
     data: { user: newUser },
   });
 });
+
 // ========= Send  OTP  =====================
+
 exports.sendOTP = catchAsync(async (req, res, next) => {
   const otpLength2 = 4;
+  // const otp = generateOtp(otpLength2);
   const otp = generateOtp(otpLength2);
   // console.log(req.body);
   const user = await User.findOne({ email: req.body.email });
@@ -248,6 +255,9 @@ exports.sendOTP = catchAsync(async (req, res, next) => {
       data: {},
     });
   }
+  user.passwordResetToken = otp;
+  await user.save();
+
   const newUser = await User.findOneAndUpdate(
     { email: req.body.email },
     { otp },
@@ -275,7 +285,6 @@ exports.verifyOtp = catchAsync(async (req, res, next) => {
     email: req.body.email,
     passwordResetExpires: { $gt: Date.now() },
   });
-  // if the token has not expired and there is a user set the new password
 
   if (!user) {
     return res.status(400).send({
@@ -405,21 +414,24 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 //     ====================LOGIN User=========================================
 exports.login = catchAsync(async (req, res, next) => {
   console.log("route hit for login");
-  const { email, password } = req.body;
+  const { email, password, location } = req.body; // Extracting location from request body
+  const defaultLocation = { type: "Point", coordinates: [0, 0] }; // Default location
+
   // check if email and password exist
   if (!email || !password) {
-    return res.status(400).send({
-      message: "please provide email and password",
+    return res.status(400).json({
+      message: "Please provide email and password",
       status: 400,
       success: false,
       data: {},
     });
   }
-  // check if user exist and password is correct
+
+  // check if user exists and password is correct
   const user = await User.findOne({ email }).select("+password");
 
   if (!user || !(await user.correctPassword(password, user.password))) {
-    return res.status(400).send({
+    return res.status(400).json({
       message: "Incorrect email or password",
       errorType: "wrong-password",
       status: 400,
@@ -427,20 +439,11 @@ exports.login = catchAsync(async (req, res, next) => {
       data: {},
     });
   }
-  const logedIn = await RefreshToken.findOne({
-    // device: req.body.device.id,
-    device: req.body.device && req.body.device.id,
-    user: user._id,
-  });
-  console.log(logedIn);
-  if (logedIn) {
-    await RefreshToken.findByIdAndDelete({ _id: logedIn._id });
-  }
-  console.log(user);
 
-  if (user.verified == false) {
-    const otpLength3 = 4;
-    const otp = generateOtp(otpLength3);
+  // Check if user is verified
+  if (!user.verified) {
+    const otpLength = 4;
+    const otp = generateOtp(otpLength);
 
     ////// Sending Email..
     try {
@@ -448,34 +451,37 @@ exports.login = catchAsync(async (req, res, next) => {
     } catch (error) {
       console.log(error);
     }
-    ////// Expires Time
-    // const otpExpires = Date.now() + 1 * 60 * 1000 + 10 * 1000;
-    /////////////////
-    const newUserotp = await User.findOneAndUpdate(
+
+    // Update user with OTP
+    await User.findOneAndUpdate(
       { email: user.email },
       { otp },
       { new: true, runValidators: false }
     );
 
-    return res.status(400).send({
-      message: "verification is pending. OTP sent to your email",
-      errorType: "email-not-verify",
+    return res.status(400).json({
+      message: "Verification is pending. OTP sent to your email",
+      errorType: "email-not-verified",
       status: 400,
       success: false,
       data: {},
     });
   }
+
+  // Update device token and location
   await User.updateOne(
     { _id: user._id },
     {
-      // deviceToken: req.body.device.id,
       deviceToken: req.body.device && req.body.device.id,
+      location: location || defaultLocation, // If location is not provided, set default location
     }
   );
-  (user.deviceToken = req.body.device && req.body.device.id),
-    // res.act = loginChecks(user);
-    // creat token from existing function .
-    creatSendToken(user, 200, "Logged In Successfully", res, req.body.device);
+
+  // Update user object with location
+  user.location = location || defaultLocation;
+
+  // Create and send token for user authentication
+  creatSendToken(user, 200, "Logged In Successfully", res, req.body.device);
 });
 
 // ===========================VERIFY TOKEN BEFORE GETTING DATA=====================
@@ -603,16 +609,16 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 exports.resetPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     email: req.body.email,
-    // passwordResetExpires: { $gt: Date.now() },
+    // passwordResetExpires: { gt: Date.now() },
   });
   console.log(user);
   // if the token has not expired and there is a user set the new password
 
   if (!user) {
     return res.status(400).send({
-      message: "Token may expire",
+      message: "User not found pleasse login again",
       success: false,
-      errorType: "otp-expired",
+      errorType: "User not found",
       status: 400,
       data: {},
     });
@@ -627,7 +633,14 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
     });
   }
   user.password = req.body.password;
-  // user.confirmPassword = req.body.confirmPassword;
+  user.confirmPassword = req.body.confirmPassword;
+  if (req.body.password !== req.body.confirmPassword) {
+    return res.status(400).json({
+      success: "fail",
+      status: 400,
+      message: "Password and confirm password do not match",
+    });
+  }
   user.passwordResetToken = undefined;
   user.passwordResetExpires = undefined;
 
@@ -658,7 +671,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 exports.verifyOtpForResetPassword = catchAsync(async (req, res, next) => {
   const user = await User.findOne({
     email: req.body.email,
-    // passwordResetExpires: { $gt: Date.now() },
+    // passwordResetExpires: { gt: Date.now() },
   });
   // if the token has not expired and there is a user set the new password
   console.log(user);
@@ -692,7 +705,6 @@ exports.verifyOtpForResetPassword = catchAsync(async (req, res, next) => {
 });
 
 // ===========UPDATE PASSWORD for already login user=================================
-
 exports.updatePassword = catchAsync(async (req, res, next) => {
   // 1)get user from collection.
   const user = await User.findById(req.user.id).select("+password");

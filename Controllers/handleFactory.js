@@ -1,30 +1,33 @@
 const catchAsync = require("../Utils/catchAsync");
 const AppErr = require("../Utils/appError");
-const bcrypt = require("bcrypt");
+const { bcrypt } = require("bcrypt");
 const ApiFeatures = require("../Utils/apiFeaturtes");
 const paginationQueryExtracter = require("../Utils/paginationQueryExtractor");
 //  Factory function to delete a document
 
 exports.deleteOne = (Model) =>
   catchAsync(async (req, res, next) => {
-    const { password } = req.body;
-    if (!password) {
-      return next(new AppErr("Password is required", 400));
-    }
-
-    // Find the document by ID and select the password
-    const doc = await Model.findById(req.params.id).select("+password");
-
-    if (!doc) {
-      return next(new AppErr("No User found with that Id", 404));
-    }
+    // const { password } = req.body;
+    const doc = await Model.findById({ _id: req.params.id });
+    // const doc = await Model.findById(req.params.id).exec();
+    // console.log("Provided Password:", password);
+    // console.log("Stored Hashed Password:", doc ? doc.password : " not found");
 
     // Compare the provided password with the hashed password
-    const passwordMatch = await bcrypt.compare(password, doc.password);
 
-    if (!passwordMatch) {
-      return next(new AppErr("Incorrect password", 401));
+    if (!doc) {
+      return next(new AppErr("No document found with that Id", 404));
     }
+
+    // const passwordMatch = await bcrypt.compare(
+    //   password,
+    //   doc ? doc.password : ""
+    // );
+
+    // console.log(passwordMatch);
+    // if (!passwordMatch) {
+    //   return next(new AppErr("Incorrect password", 401));
+    // }
 
     // If passwords match, delete the document
     await Model.findByIdAndDelete(req.params.id);
@@ -32,7 +35,7 @@ exports.deleteOne = (Model) =>
     res.status(200).json({
       status: 200,
       success: true,
-      message: "User deleted successfully",
+      message: "document deleted successfully",
       data: null,
     });
   });

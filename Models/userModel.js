@@ -63,13 +63,9 @@ const userSchema = new mongoose.Schema(
   { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
 );
 userSchema.index({ location: "2dsphere" });
-
 userSchema.pre("save", async function (next) {
   //only run this function if password id actually modified
   if (!this.isModified("password")) return next();
-  if (this.password !== this.confirmPassword) {
-    return next(new Error("Passwords do not match"));
-  }
   // Hash the password with cost
   this.password = await bcrypt.hash(this.password, 12);
   // remove(stop) the confirmPassword to store in db. require means necessary to input not to save in db.
