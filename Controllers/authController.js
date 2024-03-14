@@ -191,6 +191,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     image: req.body.image,
     password: req.body.password,
     confirmPassword: req.body.confirmPassword,
+    confirmPassword: req.body.confirmPassword,
     otp: null,
     passwordChangedAt: Date.now(),
   });

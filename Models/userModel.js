@@ -4,11 +4,7 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    firstName: {
-      type: String,
-      trim: true,
-    },
-    lastName: {
+    name: {
       type: String,
       trim: true,
     },
@@ -19,13 +15,27 @@ const userSchema = new mongoose.Schema(
       //   lowercase: truee,
       validate: [validator.isEmail, "please provide a valid email"],
     },
+    location: {
+      type: {
+        type: String,
+        default: "Point",
+      },
+      coordinates: { type: [Number], default: [0, 0] },
+    },
     number: String,
+    userType: String,
     image: {
       type: String,
       default:
         "https://icon-library.com/images/default-profile-icon/default-profile-icon-6.jpg",
     },
     password: {
+      type: String,
+      required: [true, "must enter password"],
+      minlength: 8,
+      select: false,
+    },
+    confirmPassword: {
       type: String,
       required: [true, "must enter password"],
       minlength: 8,
@@ -57,6 +67,9 @@ userSchema.index({ location: "2dsphere" });
 userSchema.pre("save", async function (next) {
   //only run this function if password id actually modified
   if (!this.isModified("password")) return next();
+  if (this.password !== this.confirmPassword) {
+    return next(new Error("Passwords do not match"));
+  }
   // Hash the password with cost
   this.password = await bcrypt.hash(this.password, 12);
   // remove(stop) the confirmPassword to store in db. require means necessary to input not to save in db.

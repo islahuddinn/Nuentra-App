@@ -35,9 +35,6 @@ router.post("/logout", authController.logout);
 //   userController.updateMe
 // );
 
-// router.get("/speedPlay", timeController.startEggTimer);
-// router.get("/soloPlay", timeController.startEggTimer);
-
 router.get("/me", userControler.getMe, userControler.getUser);
 router.patch("/updateProfile", userControler.updateMe);
 // router.patch("/updateMe", userControler.updateMe);
