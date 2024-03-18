@@ -4,7 +4,11 @@ const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema(
   {
-    name: {
+    firstName: {
+      type: String,
+      trim: true,
+    },
+    lastName: {
       type: String,
       trim: true,
     },
@@ -14,13 +18,6 @@ const userSchema = new mongoose.Schema(
       required: [true, "must enter email"],
       //   lowercase: truee,
       validate: [validator.isEmail, "please provide a valid email"],
-    },
-    location: {
-      type: {
-        type: String,
-        default: "Point",
-      },
-      coordinates: { type: [Number], default: [0, 0] },
     },
     number: String,
     userType: String,
@@ -40,6 +37,10 @@ const userSchema = new mongoose.Schema(
       required: [true, "must enter password"],
       minlength: 8,
       select: false,
+    },
+    isProfileCompleted: {
+      type: Boolean,
+      default: false,
     },
     passwordChangedAt: Date,
     passwordResetToken: String,

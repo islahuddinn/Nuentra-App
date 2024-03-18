@@ -188,7 +188,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 
   // If password and confirm password match, create new user
   const newUser = await User.create({
-    fullName: req.body.fullName,
+    firstName: req.body.firstName,
+    lastName: req.body.lastName,
     email: req.body.email,
     image: req.body.image,
     userType: req.body.userType,
@@ -414,8 +415,7 @@ exports.verifyEmail = catchAsync(async (req, res, next) => {
 //     ====================LOGIN User=========================================
 exports.login = catchAsync(async (req, res, next) => {
   console.log("route hit for login");
-  const { email, password, location } = req.body; // Extracting location from request body
-  const defaultLocation = { type: "Point", coordinates: [0, 0] }; // Default location
+  const { email, password } = req.body; // Extracting location from request body
 
   // check if email and password exist
   if (!email || !password) {
@@ -473,13 +473,9 @@ exports.login = catchAsync(async (req, res, next) => {
     { _id: user._id },
     {
       deviceToken: req.body.device && req.body.device.id,
-      location: location || defaultLocation, // If location is not provided, set default location
     }
   );
-
-  // Update user object with location
-  user.location = location || defaultLocation;
-
+  res.act = "Profile-setup-pending";
   // Create and send token for user authentication
   creatSendToken(user, 200, "Logged In Successfully", res, req.body.device);
 });
