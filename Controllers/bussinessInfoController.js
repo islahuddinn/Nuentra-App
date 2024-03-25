@@ -2,12 +2,12 @@ const catchAsync = require("../Utils/catchAsync");
 const User = require("../Models/userModel");
 const BusinessInfo = require("../Models/businessModel");
 const Factory = require("./handleFactory");
-const slugify = require("slugify");
 
 //////=====User BusinessInfo APIs=========/////
+
 exports.createBusinessInfo = catchAsync(async (req, res, next) => {
   const userId = req.user.id;
-  const businessInfo = req.body;
+  const questionnaireAnswers = req.body.answers;
 
   try {
     // Find the user by userId
@@ -22,21 +22,13 @@ exports.createBusinessInfo = catchAsync(async (req, res, next) => {
       });
     }
 
-    // Create an object to store the BusinessInfo as key-value pairs
-    const businessInfoObject = {};
-
-    // Loop through the BusinessInfo object and store them in the BusinessInfo object
-    for (const [key, value] of Object.entries(businessInfo)) {
-      businessInfoObject[key] = value;
-    }
-
-    // Create a new interest object
+    // Create a new BusinessInfo object with the user's ID and the questionnaire answers
     const newBusinessInfo = new BusinessInfo({
       userId: userId,
-      businessInfo: businessInfoObject,
+      businessInformation: questionnaireAnswers,
     });
 
-    // Save the interest object
+    // Save the BusinessInfo object
     const savedBusinessInfo = await newBusinessInfo.save();
 
     // Return success response
@@ -57,14 +49,16 @@ exports.createBusinessInfo = catchAsync(async (req, res, next) => {
 });
 
 //// in case we need to delte user BusinessInfo
-exports.deleteInterest = catchAsync(async (req, res, next) => {
+exports.deleteBusinessInfo = catchAsync(async (req, res, next) => {
   // Extract the interest ID from request parameters
-  const { interestId } = req.params;
-  console.log(interestId);
+  const { businessInfoId } = req.params;
+  console.log(businessInfoId);
   // Find and delete the interest document by ID
-  const deletedInterest = await Interest.findByIdAndDelete(interestId);
+  const deletedBusinessInfo = await BusinessInfo.findByIdAndDelete(
+    businessInfoId
+  );
 
-  if (!deletedInterest) {
+  if (!deletedBusinessInfo) {
     // If no interest found with the provided ID, send a 404 error
     return res.status(404).json({
       success: false,
@@ -76,12 +70,11 @@ exports.deleteInterest = catchAsync(async (req, res, next) => {
   res.status(200).json({
     success: true,
     message: "Interest deleted successfully",
-    data: deletedInterest,
+    data: deletedBusinessInfo,
   });
 });
 
-exports.createInterest = Factory.creatOne(Interest);
-exports.getAllInterest = Factory.getAll(Interest);
-exports.getOneInterest = Factory.getOne(Interest);
-exports.updateInterest = Factory.updateOne(Interest);
+exports.getAllBusinessInfo = Factory.getAll(BusinessInfo);
+exports.getOneBusinessInfo = Factory.getOne(BusinessInfo);
+exports.updateBusinessInfo = Factory.updateOne(BusinessInfo);
 // exports.deleteInterest = Factory.deleteOne(Interest);

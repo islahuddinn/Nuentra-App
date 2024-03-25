@@ -1,7 +1,7 @@
 const express = require("express");
 const userControler = require("../Controllers/userController");
 const authController = require("../Controllers/authController");
-// const pushNotificationController = require("../controllers/push-notificationController");
+// const pushNotificationController = require("../Controllers/pushNotificationController");
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.post(
 
 // protecting all routes ussing protect midleware
 router.use(authController.protect);
-// router.get("/mynotifications", userController.mynotifications);
+router.get("/mynotifications", userControler.mynotifications);
 router.patch("/updateMyPassword", authController.updatePassword);
 router.post("/logout", authController.logout);
 // router.post(
